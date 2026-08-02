@@ -135,7 +135,6 @@ function makeMove(index, symbol) {
     updateScoreboard();
 
     if (scoreP1 === 2 || scoreP2 === 2) {
-      // Determine overall match winner name correctly
       const matchWinnerSymbol = scoreP1 === 2 ? "O" : "X";
       let matchWinnerName = "PLAYER 1";
       
@@ -225,13 +224,14 @@ function resetEntireMatch() {
 }
 
 function showMatchWinner(winnerName, winnerSymbol) {
-  confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-  
   const titleEl = document.getElementById('winnerTitle');
   const subtextEl = document.getElementById('winnerSubtext');
 
+  let isWinner = false;
+
   if (currentMode === 'online') {
     if (winnerSymbol === localSymbol) {
+      isWinner = true;
       titleEl.textContent = "CONGRATULATIONS!";
       subtextEl.textContent = "🎉 YOU WIN THE MATCH!";
     } else {
@@ -240,6 +240,7 @@ function showMatchWinner(winnerName, winnerSymbol) {
     }
   } else if (currentMode === 'ai') {
     if (winnerSymbol === "O") {
+      isWinner = true;
       titleEl.textContent = "CONGRATULATIONS!";
       subtextEl.textContent = "🎉 YOU WIN THE MATCH!";
     } else {
@@ -247,9 +248,14 @@ function showMatchWinner(winnerName, winnerSymbol) {
       subtextEl.textContent = "😢 Better luck next time!";
     }
   } else {
-    // Local Pass & Play
+    isWinner = true;
     titleEl.textContent = "MATCH WINNER!";
     subtextEl.textContent = `🎉 ${winnerName} HAS WON THE MATCH!`;
+  }
+
+  // Sirf jeetne par hi confetti celebration trigger hoga
+  if (isWinner && typeof confetti === 'function') {
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   }
 
   openModal('winnerModal');
@@ -506,7 +512,12 @@ function setupConn(isHost) {
   });
 
   conn.on('close', () => {
-    showGameAlert("USER LEFT", "Dusra player game se left ho gaya hai.");
+    isGameActive = false;
+    const roundBanner = document.getElementById('roundBanner');
+    if (roundBanner) {
+      roundBanner.textContent = "OPPONENT LEFT - YOU WON!";
+      roundBanner.style.color = "#2b8067";
+    }
   });
 }
 
