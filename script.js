@@ -337,12 +337,17 @@ function createCustomRoom() {
 
 function joinCustomRoom() {
   const codeInput = document.getElementById('roomCodeInput');
-  let rawCode = codeInput ? codeInput.value.trim().toLowerCase() : "";
+  let rawCode = codeInput ? codeInput.value.trim() : "";
   if (!rawCode) return alert("Kripya Room Code enter karein!");
 
-  if (!rawCode.startsWith('ttt-')) {
-    rawCode = 'ttt-' + rawCode;
-  }
+  // FIX: pehle ye line ".toLowerCase()" kar deti thi, lekin room ID
+  // generateCustomCode() mein UPPERCASE banti hai. PeerJS IDs case-sensitive
+  // hote hain, isliye "ttt-abcde" aur "ttt-ABCDE" alag peer maane jaate the
+  // aur join hamesha "peer-unavailable" (code galat) error deta tha.
+  // Ab prefix hata kar baaki part ko UPPERCASE mein normalize kar rahe hain,
+  // taaki host ke asli code se hamesha match ho, chahe user kaise bhi type kare.
+  rawCode = rawCode.replace(/^ttt-/i, '').toUpperCase();
+  rawCode = 'ttt-' + rawCode;
 
   currentMode = 'online';
   document.getElementById('modalTitle').textContent = "JOINING ROOM...";
