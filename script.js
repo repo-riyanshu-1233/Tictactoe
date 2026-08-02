@@ -12,6 +12,7 @@ let peer = null;
 let conn = null;
 let localSymbol = "O";
 let pvpTimer = null;
+let isExplicitlyLeaving = false; // Track karega ki user ne khud game chhoda hai ya nahi
 
 const winConditions = [
   [0,1,2], [3,4,5], [6,7,8],
@@ -26,9 +27,41 @@ function showScreen(screenId) {
   document.getElementById('backBtn').style.visibility = (screenId === 'menuScreen') ? 'hidden' : 'visible';
 }
 
+function showTemporaryBanner(message, duration = 3000) {
+  let banner = document.getElementById('tempLeftBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'tempLeftBanner';
+    banner.style.position = 'fixed';
+    banner.style.top = '15px';
+    banner.style.left = '50%';
+    banner.style.transform = 'translateX(-50%)';
+    banner.style.backgroundColor = '#c0392b';
+    banner.style.color = '#fff';
+    banner.style.padding = '8px 16px';
+    banner.style.borderRadius = '20px';
+    banner.style.fontSize = '0.9rem';
+    banner.style.fontWeight = 'bold';
+    banner.style.zIndex = '99999';
+    banner.style.boxShadow = '0 4px 6px rgba(0,0,0,0.2)';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = message;
+  banner.style.display = 'block';
+
+  setTimeout(() => {
+    banner.style.display = 'none';
+  }, duration);
+}
+
 function goBack() {
+  isExplicitlyLeaving = true;
   if (pvpTimer) clearTimeout(pvpTimer);
-  if (conn) { conn.close(); conn = null; }
+  if (conn) { 
+    conn.close(); 
+    conn = null; 
+  }
+  showTemporaryBanner("You left the match", 3000);
   showScreen('menuScreen');
 }
 
@@ -82,6 +115,7 @@ function getUserName() {
 function startPassAndPlay() {
   currentMode = 'local';
   localSymbol = "O";
+  isExplicitlyLeaving = false;
   document.getElementById('p1Name').textContent = "PLAYER 1";
   document.getElementById('p2Name').textContent = "PLAYER 2";
   showScreen('gameScreen');
@@ -92,6 +126,7 @@ function startAIMode(diff) {
   currentMode = 'ai';
   aiDifficulty = diff;
   localSymbol = "O";
+  isExplicitlyLeaving = false;
   document.getElementById('p1Name').textContent = "YOU";
   document.getElementById('p2Name').textContent = `AI (${diff.toUpperCase()})`;
   showScreen('gameScreen');
@@ -412,6 +447,7 @@ function initPeer(customId, cb) {
 
 function createCustomRoom() {
   currentMode = 'online';
+  isExplicitlyLeaving = false;
   
   const modalTitle = document.getElementById('modalTitle');
   modalTitle.textContent = "ROOM CREATED!";
@@ -450,6 +486,7 @@ function joinCustomRoom() {
   rawCode = 'ttt-' + rawCode;
 
   currentMode = 'online';
+  isExplicitlyLeaving = false;
 
   const modalTitle = document.getElementById('modalTitle');
   modalTitle.textContent = "JOINING ROOM...";
@@ -511,7 +548,8 @@ function setupConn(isHost) {
   });
 
   conn.on('close', () => {
-    if (isGameActive) {
+    // Agar user ne khud game nahi chhoda, tabhi doosre player ko winner banayenge
+    if (isGameActive && !isExplicitlyLeaving) {
       isGameActive = false;
       const myName = getUserName();
       showMatchWinner(myName, localSymbol);
