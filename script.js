@@ -11,6 +11,7 @@ let currentRound = 1;
 let peer = null;
 let conn = null;
 let localSymbol = "O";
+let pvpTimer = null;
 
 const winConditions = [
   [0,1,2], [3,4,5], [6,7,8],
@@ -26,7 +27,8 @@ function showScreen(screenId) {
 }
 
 function goBack() {
-  if(conn) conn.close();
+  if (pvpTimer) clearTimeout(pvpTimer);
+  if (conn) { conn.close(); conn = null; }
   showScreen('menuScreen');
 }
 
@@ -80,7 +82,7 @@ cells.forEach(cell => {
     if (currentMode === 'online') {
       if (currentPlayer !== localSymbol) return;
       makeMove(index, currentPlayer);
-      if (conn) conn.send({ type: 'move', index: index, symbol: currentPlayer });
+      if (conn && conn.open) conn.send({ type: 'move', index: index, symbol: currentPlayer });
     } else {
       makeMove(index, currentPlayer);
       if (currentMode === 'ai' && isGameActive && currentPlayer === "X") {
@@ -261,17 +263,55 @@ function checkWinState(board, sym) {
   return winConditions.some(c => board[c[0]] === sym && board[c[1]] === sym && board[c[2]] === sym);
 }
 
+function startOnlinePVP() {
+  showScreen('pvpScreen');
+  const spinner = document.getElementById('pvpStatusSpinner');
+  const title = document.getElementById('pvpStatusText');
+  const detail = document.getElementById('pvpStatusDetail');
+
+  spinner.style.display = 'block';
+  title.textContent = "SEARCHING MATCH...";
+  title.style.color = "#2b8067";
+  detail.textContent = "Connecting to online matchmaking servers";
+
+  if (pvpTimer) clearTimeout(pvpTimer);
+
+  pvpTimer = setTimeout(() => {
+    spinner.style.display = 'none';
+    title.textContent = "SERVER UNREACHABLE";
+    title.style.color = "#c0392b";
+    detail.textContent = "Please try again later";
+  }, 10000);
+}
+
+function cancelPVP() {
+  if (pvpTimer) clearTimeout(pvpTimer);
+  showScreen('menuScreen');
+}
+
 function initPeer(cb) {
-  if (!peer) {
-    peer = new Peer();
-    peer.on('open', id => cb(id));
-    peer.on('connection', c => { conn = c; setupConn(); });
-  } else if (peer.id) cb(peer.id);
+  if (peer && !peer.destroyed) {
+    if (peer.id) cb(peer.id);
+    else peer.once('open', id => cb(id));
+    return;
+  }
+
+  peer = new Peer();
+  peer.on('open', id => cb(id));
+  peer.on('connection', c => {
+    conn = c;
+    setupConn(false);
+  });
+  peer.on('error', err => {
+    closeModal('waitingModal');
+    alert("Connection Error: Room Code sahi se check karein!");
+  });
 }
 
 function createCustomRoom() {
   currentMode = 'online';
   document.getElementById('modalTitle').textContent = "ROOM CREATED!";
+  document.getElementById('modalCodeDisplay').textContent = "LOADING...";
   openModal('waitingModal');
 
   initPeer(id => {
@@ -281,8 +321,10 @@ function createCustomRoom() {
 }
 
 function joinCustomRoom() {
-  const code = document.getElementById('roomCodeInput').value.trim();
+  const codeInput = document.getElementById('roomCodeInput');
+  const code = codeInput ? codeInput.value.trim().toLowerCase() : "";
   if (!code) return alert("Kripya Room Code enter karein!");
+
   currentMode = 'online';
   document.getElementById('modalTitle').textContent = "JOINING ROOM...";
   document.getElementById('modalCodeDisplay').textContent = "";
@@ -290,29 +332,35 @@ function joinCustomRoom() {
 
   initPeer(() => {
     conn = peer.connect(code);
-    setupConn();
+    setupConn(true);
   });
 }
 
-function startOnlinePVP() {
-  alert("Public Matchmaking ke liye Sandbox Room create ya join karke code share karein!");
-}
-
-function setupConn() {
+function setupConn(isHost) {
   conn.on('open', () => {
     closeModal('waitingModal');
     showScreen('gameScreen');
+    localSymbol = isHost ? "X" : "O";
     conn.send({ type: 'name', name: getUserName() });
   });
 
   conn.on('data', data => {
     if (data.type === 'name') {
-      document.getElementById('p1Name').textContent = getUserName();
-      document.getElementById('p2Name').textContent = data.name;
-      localSymbol = "O";
+      if (isHost) {
+        document.getElementById('p1Name').textContent = getUserName();
+        document.getElementById('p2Name').textContent = data.name;
+      } else {
+        document.getElementById('p1Name').textContent = data.name;
+        document.getElementById('p2Name').textContent = getUserName();
+      }
       resetEntireMatch();
     } else if (data.type === 'move') {
       makeMove(data.index, data.symbol);
     }
+  });
+
+  conn.on('close', () => {
+    alert("Opponent disconnected!");
+    showScreen('menuScreen');
   });
 }
