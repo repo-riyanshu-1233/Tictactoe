@@ -12,7 +12,7 @@ let peer = null;
 let conn = null;
 let localSymbol = "O";
 let pvpTimer = null;
-let isExplicitlyLeaving = false; // Track karega ki user ne khud game chhoda hai ya nahi
+let isExplicitlyLeaving = false;
 
 const winConditions = [
   [0,1,2], [3,4,5], [6,7,8],
@@ -55,13 +55,18 @@ function showTemporaryBanner(message, duration = 3000) {
 }
 
 function goBack() {
-  isExplicitlyLeaving = true;
-  if (pvpTimer) clearTimeout(pvpTimer);
-  if (conn) { 
-    conn.close(); 
-    conn = null; 
+  const isGameScreenActive = document.getElementById('gameScreen')?.classList.contains('active');
+  
+  if (isGameScreenActive) {
+    isExplicitlyLeaving = true;
+    if (conn) { 
+      conn.close(); 
+      conn = null; 
+    }
+    showTemporaryBanner("You left the match", 3000);
   }
-  showTemporaryBanner("You left the match", 3000);
+
+  if (pvpTimer) clearTimeout(pvpTimer);
   showScreen('menuScreen');
 }
 
@@ -101,10 +106,6 @@ function showGameAlert(title, message, btnText = "OK") {
   }
 
   openModal('waitingModal');
-}
-
-function redirectToGame(url) {
-  window.open(url, '_blank');
 }
 
 function getUserName() {
@@ -289,15 +290,20 @@ function showMatchWinner(winnerName, winnerSymbol) {
   }
 
   if (isWinner && typeof confetti === 'function') {
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
   }
 
   openModal('winnerModal');
 }
 
-function closeWinnerModal() {
+function replayGame() {
   closeModal('winnerModal');
   resetEntireMatch();
+}
+
+function exitToMenuFromModal() {
+  closeModal('winnerModal');
+  goBack();
 }
 
 function checkWin() {
@@ -548,7 +554,6 @@ function setupConn(isHost) {
   });
 
   conn.on('close', () => {
-    // Agar user ne khud game nahi chhoda, tabhi doosre player ko winner banayenge
     if (isGameActive && !isExplicitlyLeaving) {
       isGameActive = false;
       const myName = getUserName();
