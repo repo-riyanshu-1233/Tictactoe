@@ -253,7 +253,6 @@ function showMatchWinner(winnerName, winnerSymbol) {
     subtextEl.textContent = `🎉 ${winnerName} HAS WON THE MATCH!`;
   }
 
-  // Sirf jeetne par hi confetti celebration trigger hoga
   if (isWinner && typeof confetti === 'function') {
     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   }
@@ -512,11 +511,10 @@ function setupConn(isHost) {
   });
 
   conn.on('close', () => {
-    isGameActive = false;
-    const roundBanner = document.getElementById('roundBanner');
-    if (roundBanner) {
-      roundBanner.textContent = "OPPONENT LEFT - YOU WON!";
-      roundBanner.style.color = "#2b8067";
+    if (isGameActive) {
+      isGameActive = false;
+      const myName = getUserName();
+      showMatchWinner(myName, localSymbol);
     }
   });
 }
