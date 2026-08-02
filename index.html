@@ -179,7 +179,6 @@
       </div>
     </div>
 
-    <!-- Updated Winner Modal with Dual Action Buttons -->
     <div id="winnerModal" class="modal">
       <div class="modal-content">
         <div class="modal-title" id="winnerTitle">MATCH WINNER!</div>
@@ -191,14 +190,18 @@
       </div>
     </div>
 
-    <!-- Maintenance System Overlay -->
     <div id="maintenanceModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-title" style="color: #c0392b;">MAINTENANCE</div>
-        <div class="modal-text">
-          🔧 <b>UNDER MAINTENANCE</b><br><br>
-          We are currently upgrading the game servers and features. Please check back shortly!
+      <div class="modal-content" style="padding: 30px 20px;">
+        <div class="ox-spinner-container">
+          <div class="ox-o-ring"></div>
+          <div class="ox-x-center">X</div>
         </div>
+        <div class="modal-title" style="color: #c0392b; font-size: 2.5rem; margin-top: 15px;">GAME UNDER MAINTENANCE</div>
+        <div class="server-status-badge">
+          <span class="status-dot"></span>
+          SERVER STATUS: OFFLINE
+        </div>
+        <button class="teal-btn" style="width: 100%; margin-top: 20px;" onclick="redirectToGame('https://your-website-link.com')">OTHER GAMES</button>
       </div>
     </div>
 
