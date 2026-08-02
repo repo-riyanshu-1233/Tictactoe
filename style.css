@@ -409,6 +409,18 @@ body {
   margin-bottom: 18px;
 }
 
+.modal-btn-group {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.modal-btn-group .teal-btn {
+  flex: 1;
+  font-size: 1.4rem;
+  padding: 10px;
+}
+
 .game-card {
   background: #fff;
   border: 3px solid #8e806a;
