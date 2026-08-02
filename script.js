@@ -135,10 +135,22 @@ function makeMove(index, symbol) {
     updateScoreboard();
 
     if (scoreP1 === 2 || scoreP2 === 2) {
-      const matchWinner = scoreP1 === 2 
-        ? document.getElementById('p1Name').getAttribute('data-realname') || document.getElementById('p1Name').textContent
-        : document.getElementById('p2Name').getAttribute('data-realname') || document.getElementById('p2Name').textContent;
-      setTimeout(() => showMatchWinner(matchWinner), 400);
+      // Determine overall match winner name correctly
+      const matchWinnerSymbol = scoreP1 === 2 ? "O" : "X";
+      let matchWinnerName = "PLAYER 1";
+      
+      if (currentMode === 'online') {
+        const p1Raw = document.getElementById('p1Name').getAttribute('data-realname') || "PLAYER 1";
+        const p2Raw = document.getElementById('p2Name').getAttribute('data-realname') || "PLAYER 2";
+        const p1Sym = document.getElementById('p1Name').textContent.includes('[X]') ? 'X' : 'O';
+        matchWinnerName = (p1Sym === matchWinnerSymbol) ? p1Raw : p2Raw;
+      } else if (currentMode === 'ai') {
+        matchWinnerName = matchWinnerSymbol === "O" ? "YOU" : document.getElementById('p2Name').textContent;
+      } else {
+        matchWinnerName = matchWinnerSymbol === "O" ? "PLAYER 1" : "PLAYER 2";
+      }
+
+      setTimeout(() => showMatchWinner(matchWinnerName, matchWinnerSymbol), 400);
     } else {
       currentRound++;
       setTimeout(() => resetRound(`ROUND ${currentRound}`), 1000);
@@ -180,7 +192,7 @@ function updateTurnUI() {
   } else {
     const p1NameText = document.getElementById('p1Name').textContent;
     const p2NameText = document.getElementById('p2Name').textContent;
-    roundBanner.textContent = currentPlayer === "O" ? `${p1NameText}'S TURN (O)` : `${p2NameText}'S TURN (X)`;
+    roundBanner.textContent = currentPlayer === "O" ? `${p1NameText.split(' [')[0]}'S TURN (O)` : `${p2NameText.split(' [')[0]}'S TURN (X)`;
     roundBanner.style.color = "#c0392b";
   }
 }
@@ -212,10 +224,34 @@ function resetEntireMatch() {
   resetRound();
 }
 
-function showMatchWinner(winnerName) {
+function showMatchWinner(winnerName, winnerSymbol) {
   confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-  document.getElementById('winnerTitle').textContent = "MATCH WINNER!";
-  document.getElementById('winnerSubtext').textContent = `🎉 ${winnerName} HAS WON THE MATCH!`;
+  
+  const titleEl = document.getElementById('winnerTitle');
+  const subtextEl = document.getElementById('winnerSubtext');
+
+  if (currentMode === 'online') {
+    if (winnerSymbol === localSymbol) {
+      titleEl.textContent = "CONGRATULATIONS!";
+      subtextEl.textContent = "🎉 YOU WIN THE MATCH!";
+    } else {
+      titleEl.textContent = "YOU LOSE!";
+      subtextEl.textContent = "😢 Better luck next time!";
+    }
+  } else if (currentMode === 'ai') {
+    if (winnerSymbol === "O") {
+      titleEl.textContent = "CONGRATULATIONS!";
+      subtextEl.textContent = "🎉 YOU WIN THE MATCH!";
+    } else {
+      titleEl.textContent = "YOU LOSE!";
+      subtextEl.textContent = "😢 Better luck next time!";
+    }
+  } else {
+    // Local Pass & Play
+    titleEl.textContent = "MATCH WINNER!";
+    subtextEl.textContent = `🎉 ${winnerName} HAS WON THE MATCH!`;
+  }
+
   openModal('winnerModal');
 }
 
