@@ -1,4 +1,4 @@
-const IS_MAINTENANCE_MODE = true;
+const IS_MAINTENANCE_MODE = false;
 
 let currentMode = 'local';
 let aiDifficulty = 'easy';
@@ -300,7 +300,7 @@ function showMatchWinner(winnerName, winnerSymbol) {
       subtextEl.textContent = "🎉 YOU WIN THE MATCH!";
     } else {
       titleEl.textContent = "YOU LOSE!";
-      subtextEl.textContent = "😢 Better luck next time!";
+      subtextEl.textContent = "Better luck next time!";
     }
   } else if (currentMode === 'ai') {
     if (winnerSymbol === "O") {
@@ -309,7 +309,7 @@ function showMatchWinner(winnerName, winnerSymbol) {
       subtextEl.textContent = "🎉 YOU WIN THE MATCH!";
     } else {
       titleEl.textContent = "YOU LOSE!";
-      subtextEl.textContent = "😢 Better luck next time!";
+      subtextEl.textContent = " Better luck next time!";
     }
   } else {
     isWinner = true;
