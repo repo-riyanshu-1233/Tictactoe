@@ -289,22 +289,35 @@ function cancelPVP() {
   showScreen('menuScreen');
 }
 
-function initPeer(cb) {
+function generateCustomCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = 'ttt-';
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+function initPeer(customId, cb) {
   if (peer && !peer.destroyed) {
-    if (peer.id) cb(peer.id);
-    else peer.once('open', id => cb(id));
-    return;
+    peer.destroy();
   }
 
-  peer = new Peer();
+  peer = new Peer(customId);
+
   peer.on('open', id => cb(id));
   peer.on('connection', c => {
     conn = c;
-    setupConn(false);
+    setupConn(true);
   });
+  
   peer.on('error', err => {
     closeModal('waitingModal');
-    alert("Connection Error: Room Code sahi se check karein!");
+    if (err.type === 'peer-unavailable') {
+      alert("Room nahi mila! Kripya Room Code sahi se check karein.");
+    } else {
+      alert("Connection Error: Kripya dobara try karein!");
+    }
   });
 }
 
@@ -314,25 +327,31 @@ function createCustomRoom() {
   document.getElementById('modalCodeDisplay').textContent = "LOADING...";
   openModal('waitingModal');
 
-  initPeer(id => {
-    const code = id.substring(0, 5).toUpperCase();
-    document.getElementById('modalCodeDisplay').textContent = code;
+  const customId = generateCustomCode();
+
+  initPeer(customId, id => {
+    const displayCode = id.replace('ttt-', '').toUpperCase();
+    document.getElementById('modalCodeDisplay').textContent = displayCode;
   });
 }
 
 function joinCustomRoom() {
   const codeInput = document.getElementById('roomCodeInput');
-  const code = codeInput ? codeInput.value.trim().toLowerCase() : "";
-  if (!code) return alert("Kripya Room Code enter karein!");
+  let rawCode = codeInput ? codeInput.value.trim().toLowerCase() : "";
+  if (!rawCode) return alert("Kripya Room Code enter karein!");
+
+  if (!rawCode.startsWith('ttt-')) {
+    rawCode = 'ttt-' + rawCode;
+  }
 
   currentMode = 'online';
   document.getElementById('modalTitle').textContent = "JOINING ROOM...";
-  document.getElementById('modalCodeDisplay').textContent = "";
+  document.getElementById('modalCodeDisplay').textContent = rawCode.replace('ttt-', '').toUpperCase();
   openModal('waitingModal');
 
-  initPeer(() => {
-    conn = peer.connect(code);
-    setupConn(true);
+  initPeer(null, () => {
+    conn = peer.connect(rawCode);
+    setupConn(false);
   });
 }
 
@@ -340,7 +359,7 @@ function setupConn(isHost) {
   conn.on('open', () => {
     closeModal('waitingModal');
     showScreen('gameScreen');
-    localSymbol = isHost ? "X" : "O";
+    localSymbol = isHost ? "O" : "X";
     conn.send({ type: 'name', name: getUserName() });
   });
 
