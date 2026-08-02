@@ -1,4 +1,4 @@
-const IS_MAINTENANCE_MODE = ture;
+const IS_MAINTENANCE_MODE = true;
 
 let currentMode = 'local';
 let aiDifficulty = 'easy';
@@ -21,6 +21,7 @@ const winConditions = [
   [0,3,6], [1,4,7], [2,5,8],
   [0,4,8], [2,4,6]
 ];
+
 window.addEventListener('DOMContentLoaded', () => {
   if (IS_MAINTENANCE_MODE) {
     openModal('maintenanceModal');
@@ -99,7 +100,7 @@ function openModal(id) {
 }
 
 function closeModal(id) {
-  if (id === 'maintenanceModal' && IS_MAINTENANCE_MODE) return; // Prevent closing maintenance window if active
+  if (id === 'maintenanceModal' && IS_MAINTENANCE_MODE) return;
   const modal = document.getElementById(id);
   modal.classList.remove('active');
   setTimeout(() => modal.style.display = 'none', 250);
