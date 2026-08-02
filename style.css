@@ -443,3 +443,64 @@ body {
   color: #665847;
   margin-bottom: 15px;
 }
+
+.ox-spinner-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 10px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ox-o-ring {
+  width: 100%;
+  height: 100%;
+  border: 8px solid #2b8067;
+  border-top: 8px solid transparent;
+  border-radius: 50%;
+  animation: rotateO 1.5s linear infinite;
+}
+
+@keyframes rotateO {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ox-x-center {
+  position: absolute;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #c0392b;
+  line-height: 1;
+}
+
+.server-status-badge {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #c0392b;
+  background: #fff;
+  border: 2px solid #c0392b;
+  padding: 6px 16px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #c0392b;
+  border-radius: 50%;
+  display: inline-block;
+  animation: blink 1.2s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
