@@ -16,6 +16,11 @@ let localSymbol = "O";
 let pvpTimer = null;
 let isExplicitlyLeaving = false;
 
+let roundStartSymbol = "O";
+
+// assuming P1 = "O".
+let p1Symbol = "O";
+
 const winConditions = [
   [0,1,2], [3,4,5], [6,7,8],
   [0,3,6], [1,4,7], [2,5,8],
@@ -142,6 +147,7 @@ function startPassAndPlay() {
   if (checkMaintenance()) return;
   currentMode = 'local';
   localSymbol = "O";
+  p1Symbol = "O"; // Player 1 is always "O" in Pass & Play
   isExplicitlyLeaving = false;
   document.getElementById('p1Name').textContent = "PLAYER 1";
   document.getElementById('p2Name').textContent = "PLAYER 2";
@@ -154,6 +160,7 @@ function startAIMode(diff) {
   currentMode = 'ai';
   aiDifficulty = diff;
   localSymbol = "O";
+  p1Symbol = "O"; // Player 1 (YOU) is always "O" in AI mode
   isExplicitlyLeaving = false;
   document.getElementById('p1Name').textContent = "YOU";
   document.getElementById('p2Name').textContent = `AI (${diff.toUpperCase()})`;
@@ -175,6 +182,9 @@ cells.forEach(cell => {
         conn.send({ type: 'move', index: index, symbol: localSymbol });
       }
     } else {
+     
+      // (see the auto-trigger inside resetRound()).
+      if (currentMode === 'ai' && currentPlayer !== localSymbol) return;
       makeMove(index, currentPlayer);
       if (currentMode === 'ai' && isGameActive && currentPlayer === "X") {
         setTimeout(triggerAIMove, 400);
@@ -193,20 +203,23 @@ function makeMove(index, symbol) {
 
   if (checkWin()) {
     isGameActive = false;
-    if (symbol === "O") scoreP1++;
+    if (symbol === p1Symbol) scoreP1++;
     else scoreP2++;
 
     updateScoreboard();
 
     if (scoreP1 === 2 || scoreP2 === 2) {
-      const matchWinnerSymbol = scoreP1 === 2 ? "O" : "X";
+     
+      const p2Symbol = p1Symbol === "O" ? "X" : "O";
+      const matchWinnerSymbol = scoreP1 === 2 ? p1Symbol : p2Symbol;
       let matchWinnerName = "PLAYER 1";
       
       if (currentMode === 'online') {
         const p1Raw = document.getElementById('p1Name').getAttribute('data-realname') || "PLAYER 1";
         const p2Raw = document.getElementById('p2Name').getAttribute('data-realname') || "PLAYER 2";
-        const p1Sym = document.getElementById('p1Name').textContent.includes('[X]') ? 'X' : 'O';
-        matchWinnerName = (p1Sym === matchWinnerSymbol) ? p1Raw : p2Raw;
+        // BUG FIX: use the tracked p1Symbol instead of guessing from the
+        // displayed name text - keeps this consistent with the scoring fix above.
+        matchWinnerName = (p1Symbol === matchWinnerSymbol) ? p1Raw : p2Raw;
       } else if (currentMode === 'ai') {
         matchWinnerName = matchWinnerSymbol === "O" ? "YOU" : document.getElementById('p2Name').textContent;
       } else {
@@ -216,6 +229,8 @@ function makeMove(index, symbol) {
       setTimeout(() => showMatchWinner(matchWinnerName, matchWinnerSymbol), 400);
     } else {
       currentRound++;
+      
+      roundStartSymbol = roundStartSymbol === "O" ? "X" : "O";
       setTimeout(() => resetRound(`ROUND ${currentRound}`), 1000);
     }
     return;
@@ -223,6 +238,7 @@ function makeMove(index, symbol) {
 
   if (!boardState.includes("")) {
     isGameActive = false;
+  
     setTimeout(() => resetRound(`DRAW! REPLAYING ROUND ${currentRound}`), 1000);
     return;
   }
@@ -235,7 +251,7 @@ function updateTurnUI() {
   const p1Box = document.getElementById('p1Box');
   const p2Box = document.getElementById('p2Box');
   
-  if (currentPlayer === "O") {
+  if (currentPlayer === p1Symbol) {
     p1Box.classList.add('active');
     p2Box.classList.remove('active');
   } else {
@@ -267,7 +283,8 @@ function updateScoreboard() {
 
 function resetRound(bannerMsg) {
   boardState = ["", "", "", "", "", "", "", "", ""];
-  currentPlayer = "O";
+  
+  currentPlayer = roundStartSymbol;
   isGameActive = true;
   cells.forEach(cell => {
     cell.textContent = "";
@@ -277,12 +294,17 @@ function resetRound(bannerMsg) {
   if (bannerMsg) {
     document.getElementById('roundBanner').textContent = bannerMsg;
   }
+
+  if (currentMode === 'ai' && currentPlayer === 'X' && isGameActive) {
+    setTimeout(triggerAIMove, 400);
+  }
 }
 
 function resetEntireMatch() {
   scoreP1 = 0;
   scoreP2 = 0;
   currentRound = 1;
+  roundStartSymbol = "O"; // every fresh match starts with "O" going first
   updateScoreboard();
   resetRound();
 }
@@ -560,6 +582,10 @@ function setupConn(isHost) {
     if (isHost) {
       localSymbol = Math.random() < 0.5 ? "O" : "X";
       const joinerSymbol = localSymbol === "O" ? "X" : "O";
+      // BUG FIX: remember which symbol Player 1 (the host) actually holds,
+      // since it's randomized right above and scoring/winner logic needs
+      // to know it (see makeMove and updateTurnUI).
+      p1Symbol = localSymbol;
 
       conn.send({ 
         type: 'init', 
@@ -578,6 +604,9 @@ function setupConn(isHost) {
   conn.on('data', data => {
     if (data.type === 'init') {
       localSymbol = data.joinerSymbol;
+      // BUG FIX: the joiner also needs to know which symbol Player 1 (the
+      // host) holds, so scoring/winner logic matches what the host sees.
+      p1Symbol = data.hostSymbol;
       setupPlayerUI(data.name, data.hostSymbol, getUserName(), data.joinerSymbol);
       resetEntireMatch();
     } else if (data.type === 'joiner_name') {
