@@ -1,8 +1,4 @@
-// ==========================================
-// GAME CONFIGURATION & MAINTENANCE SETTINGS
-// ==========================================
-// Set to 'true' to activate maintenance mode globally, or 'false' for normal play.
-const IS_MAINTENANCE_MODE = false;
+const IS_MAINTENANCE_MODE = ture;
 
 let currentMode = 'local';
 let aiDifficulty = 'easy';
@@ -18,15 +14,13 @@ let peer = null;
 let conn = null;
 let localSymbol = "O";
 let pvpTimer = null;
-let isExplicitlyLeaving = false; // Track karega ki user ne khud game chhoda hai ya nahi
+let isExplicitlyLeaving = false;
 
 const winConditions = [
   [0,1,2], [3,4,5], [6,7,8],
   [0,3,6], [1,4,7], [2,5,8],
   [0,4,8], [2,4,6]
 ];
-
-// Automatically check maintenance status when script loads
 window.addEventListener('DOMContentLoaded', () => {
   if (IS_MAINTENANCE_MODE) {
     openModal('maintenanceModal');
