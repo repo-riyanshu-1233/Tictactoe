@@ -179,11 +179,26 @@
       </div>
     </div>
 
+    <!-- Updated Winner Modal with Dual Action Buttons -->
     <div id="winnerModal" class="modal">
       <div class="modal-content">
         <div class="modal-title" id="winnerTitle">MATCH WINNER!</div>
         <p id="winnerSubtext" style="font-size: 1.4rem; margin-bottom: 20px; color: #52473b; font-family: 'Fredoka', sans-serif;"></p>
-        <button class="teal-btn" style="width: 100%;" onclick="closeWinnerModal()">PLAY AGAIN</button>
+        <div class="modal-btn-group">
+          <button class="teal-btn" style="background: #8e806a; box-shadow: 0 5px 0px #52473b;" onclick="goToMainMenuFromWinnerModal()">MAIN MENU</button>
+          <button class="teal-btn" onclick="closeWinnerModal()">PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maintenance System Overlay -->
+    <div id="maintenanceModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-title" style="color: #c0392b;">MAINTENANCE</div>
+        <div class="modal-text">
+          🔧 <b>UNDER MAINTENANCE</b><br><br>
+          We are currently upgrading the game servers and features. Please check back shortly!
+        </div>
       </div>
     </div>
 
