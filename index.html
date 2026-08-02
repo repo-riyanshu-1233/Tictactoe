@@ -1,192 +1,141 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic Tac Toe - Board Edition</title>
-  
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-  
+  <title>Tic Tac Toe</title>
   <link rel="stylesheet" href="style.css">
+  <!-- PeerJS for Online P2P Multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- Canvas Confetti for Win Animation -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
-  <div class="app-container">
-    <div class="top-bar">
-      <button id="backBtn" class="circle-icon-btn" style="visibility: hidden;" onclick="goBack()">&#10094;</button>
-      <div style="font-size: 1.6rem; color: #52473b; letter-spacing: 1px;">TIC TAC TOE</div>
-      <div style="width: 44px;"></div>
-    </div>
+  <div class="container">
+    <!-- TOP HEADER -->
+    <header class="top-bar">
+      <button id="backBtn" class="nav-btn" onclick="goBack()" style="visibility: hidden;">&larr; BACK</button>
+      <h1 class="logo">TIC TAC TOE</h1>
+      <div style="width: 70px;"></div> <!-- Spacing alignment -->
+    </header>
 
+    <!-- MENU SCREEN -->
     <div id="menuScreen" class="screen active">
-      <div class="game-logo">
-        <h1>TIC TAC TOE</h1>
-        <p>BEST OF 3 CHAMPIONSHIP</p>
+      <div class="user-profile-section">
+        <label for="usernameInput">ENTER YOUR NAME:</label>
+        <input type="text" id="usernameInput" placeholder="PLAYER 1" maxlength="12" />
       </div>
 
-      <div class="menu-buttons">
-        <button class="teal-btn" onclick="startPassAndPlay()">PASS & PLAY</button>
-        <button class="teal-btn" onclick="openAIScreen()">AI MODE</button>
-        <button class="teal-btn" onclick="startOnlinePVP()">ONLINE PVP</button>
-        <button class="teal-btn" onclick="openSandboxScreen()">SANDBOX ROOM</button>
-      </div>
+      <div class="menu-grid">
+        <button class="menu-card" onclick="startPassAndPlay()">
+          <span class="icon">👥</span>
+          <span class="title">PASS & PLAY</span>
+          <span class="desc">Play locally with a friend</span>
+        </button>
 
-      <div class="footer-links">
-        <span class="footer-text-link" onclick="openModal('aboutModal')">About</span>
-        <span class="footer-text-link" onclick="openModal('helpModal')">Help</span>
-        <span class="footer-text-link" onclick="openModal('gamesModal')">Other Games</span>
+        <button class="menu-card" onclick="openAIScreen()">
+          <span class="icon">🤖</span>
+          <span class="title">VS AI MODE</span>
+          <span class="desc">Challenge the computer</span>
+        </button>
+
+        <button class="menu-card" onclick="startOnlinePVP()">
+          <span class="icon">🌐</span>
+          <span class="title">ONLINE PVP</span>
+          <span class="desc">Match with online players</span>
+        </button>
+
+        <button class="menu-card" onclick="openSandboxScreen()">
+          <span class="icon">🛠️</span>
+          <span class="title">SANDBOX MODE</span>
+          <span class="desc">Create custom room & join</span>
+        </button>
       </div>
     </div>
 
+    <!-- AI MODE SELECTION SCREEN -->
     <div id="aiScreen" class="screen">
-      <div class="game-logo">
-        <h1>SELECT DIFFICULTY</h1>
-        <p>CHOOSE AI OPPONENT</p>
-      </div>
-      <div class="menu-buttons">
-        <button class="teal-btn" onclick="startAIMode('easy')">EASY</button>
-        <button class="teal-btn" onclick="startAIMode('medium')">MEDIUM</button>
-        <button class="teal-btn" onclick="startAIMode('hard')">HARD</button>
-        <button class="teal-btn" style="background: #c0392b; box-shadow: 0 5px 0px #822217;" onclick="startAIMode('extreme')">EXTREME 🔥</button>
+      <h2>SELECT AI DIFFICULTY</h2>
+      <div class="diff-buttons">
+        <button class="btn diff-btn easy" onclick="startAIMode('easy')">EASY</button>
+        <button class="btn diff-btn medium" onclick="startAIMode('medium')">MEDIUM</button>
+        <button class="btn diff-btn hard" onclick="startAIMode('hard')">HARD</button>
+        <button class="btn diff-btn extreme" onclick="startAIMode('extreme')">EXTREME</button>
       </div>
     </div>
 
+    <!-- SANDBOX / CUSTOM ROOM SCREEN -->
     <div id="sandboxScreen" class="screen">
-      <div class="game-logo">
-        <h1>SANDBOX ROOM</h1>
-        <p>PLAY WITH A FRIEND</p>
-      </div>
-
-      <div class="input-group">
-        <label>YOUR USERNAME</label>
-        <input type="text" id="usernameInput" class="paper-input" value="PLAYER 1" placeholder="ENTER NAME">
-      </div>
-
-      <div class="menu-buttons">
-        <button class="teal-btn" onclick="createCustomRoom()">CREATE ROOM</button>
-        
-        <div style="width: 85%; margin-top: 10px; text-align: center;">
-          <input type="text" id="roomCodeInput" class="paper-input" placeholder="ROOM CODE" style="margin-bottom: 10px; width: 100%;">
-          <button class="teal-btn" style="width: 100%;" onclick="joinCustomRoom()">JOIN ROOM</button>
+      <h2>SANDBOX ROOMS</h2>
+      <div class="sandbox-actions">
+        <button class="btn" onclick="createCustomRoom()">CREATE CUSTOM ROOM</button>
+        <div class="join-box">
+          <input type="text" id="roomCodeInput" placeholder="ENTER ROOM CODE" maxlength="10" />
+          <button class="btn btn-join" onclick="joinCustomRoom()">JOIN ROOM</button>
         </div>
       </div>
     </div>
 
+    <!-- PVP MATCHMAKING SCREEN -->
     <div id="pvpScreen" class="screen">
-      <div class="game-logo">
-        <h1>ONLINE PVP</h1>
-        <p>MATCHMAKING SERVER</p>
-      </div>
-
-      <div class="status-box">
-        <div id="pvpStatusSpinner" class="loader-spinner"></div>
-        <div id="pvpStatusText" class="status-title">CONNECTING TO SERVER...</div>
-        <div id="pvpStatusDetail" class="status-subtext">Searching for online opponents</div>
-      </div>
-
-      <div style="margin-top: auto; text-align: center; width: 100%;">
-        <button class="teal-btn" style="width: 85%; margin: 0 auto;" onclick="cancelPVP()">CANCEL</button>
+      <div class="pvp-status">
+        <div class="spinner" id="pvpStatusSpinner"></div>
+        <h2 id="pvpStatusText">SEARCHING MATCH...</h2>
+        <p id="pvpStatusDetail">Connecting to online matchmaking servers</p>
+        <button class="btn btn-secondary" onclick="cancelPVP()">CANCEL</button>
       </div>
     </div>
 
+    <!-- GAME BOARD SCREEN -->
     <div id="gameScreen" class="screen">
-      <div class="round-info" id="roundBanner">BEST OF 3 - ROUND 1</div>
-
       <div class="scoreboard">
-        <div id="p1Box" class="player-box active">
-          <div id="p1Name" class="player-title">PLAYER 1</div>
-          <div id="p1Score" class="player-score">0</div>
+        <div class="player-box active" id="p1Box">
+          <span class="player-name" id="p1Name">PLAYER 1</span>
+          <span class="player-score" id="p1Score">0</span>
         </div>
-        <div style="font-size: 1.8rem; color: #8e806a;">VS</div>
-        <div id="p2Box" class="player-box">
-          <div id="p2Name" class="player-title">PLAYER 2</div>
-          <div id="p2Score" class="player-score">0</div>
-        </div>
-      </div>
-
-      <div class="board-wrapper">
-        <div class="board" id="board">
-          <button class="cell" data-index="0"></button>
-          <button class="cell" data-index="1"></button>
-          <button class="cell" data-index="2"></button>
-          <button class="cell" data-index="3"></button>
-          <button class="cell" data-index="4"></button>
-          <button class="cell" data-index="5"></button>
-          <button class="cell" data-index="6"></button>
-          <button class="cell" data-index="7"></button>
-          <button class="cell" data-index="8"></button>
+        <div class="vs-divider">VS</div>
+        <div class="player-box" id="p2Box">
+          <span class="player-name" id="p2Name">PLAYER 2</span>
+          <span class="player-score" id="p2Score">0</span>
         </div>
       </div>
 
-      <div style="margin-top: auto; text-align: center;">
-        <button class="teal-btn" style="width: 100%;" onclick="resetEntireMatch()">RESTART MATCH</button>
+      <div class="round-banner" id="roundBanner">ROUND 1</div>
+
+      <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
       </div>
     </div>
+  </div>
 
-    <div id="aboutModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-title">ABOUT ME</div>
-        <div class="modal-text">
-          Hey there! 👋<br><br>
-          I'm <b>Riyanshu</b>, a passionate developer who loves crafting creative games, interactive web experiences, and unique visual designs.<br><br>
-          This game was built using pure web technologies with a smooth paper & board-game aesthetic!
-        </div>
-        <button class="teal-btn" style="width: 100%; font-size: 1.4rem; padding: 10px;" onclick="closeModal('aboutModal')">CLOSE</button>
+  <!-- WINNER / LOSER MODAL -->
+  <div id="winnerModal" class="modal">
+    <div class="modal-content">
+      <h2 id="winnerTitle">CONGRATULATIONS!</h2>
+      <p id="winnerSubtext">🎉 YOU WIN THE MATCH!</p>
+      <div class="modal-actions">
+        <button class="btn" onclick="replayGame()">PLAY AGAIN</button>
+        <button class="btn btn-secondary" onclick="exitToMenuFromModal()">BACK TO MENU</button>
       </div>
     </div>
+  </div>
 
-    <div id="helpModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-title">NEED HELP?</div>
-        <div class="modal-text">
-          Have questions, feedback, or found a bug? Feel free to reach out to me directly!
-          <br><br>
-          📧 <b>Email:</b><br>
-          <span style="color: #2b8067; font-weight: bold;">riyanshu@example.com</span>
-          <br><br>
-          📸 <b>Instagram:</b><br>
-          <span style="color: #c0392b; font-weight: bold;">@riyanshu_official</span>
-        </div>
-        <button class="teal-btn" style="width: 100%; font-size: 1.4rem; padding: 10px;" onclick="closeModal('helpModal')">CLOSE</button>
-      </div>
+  <!-- WAITING / ALERT MODAL -->
+  <div id="waitingModal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">ROOM CREATED!</h2>
+      <div class="code-display" id="modalCodeDisplay">---</div>
+      <button class="btn btn-secondary" onclick="closeModal('waitingModal')">CANCEL</button>
     </div>
-
-    <div id="gamesModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-title">MORE GAMES</div>
-        
-        <div class="game-card">
-          <h3>MY OTHER GAMES</h3>
-          <p>Check out my other cool web games and projects on my website!</p>
-          <div style="display: flex; gap: 10px;">
-            <button class="teal-btn" style="flex: 1; font-size: 1.2rem; padding: 8px; background: #8e806a; box-shadow: 0 4px 0px #52473b;" onclick="closeModal('gamesModal')">BACK</button>
-            <button class="teal-btn" style="flex: 1; font-size: 1.2rem; padding: 8px;" onclick="redirectToGame('https://your-website-link.com')">START</button>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div id="waitingModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-title" id="modalTitle">CONNECTING...</div>
-        <div id="modalCodeDisplay" style="font-size: 2.5rem; color: #c0392b; margin: 15px 0;"></div>
-        <button class="teal-btn" style="width: 100%;" onclick="closeModal('waitingModal')">CANCEL</button>
-      </div>
-    </div>
-
-    <div id="winnerModal" class="modal">
-      <div class="modal-content">
-        <div class="modal-title" id="winnerTitle">MATCH WINNER!</div>
-        <p id="winnerSubtext" style="font-size: 1.4rem; margin-bottom: 20px; color: #52473b; font-family: 'Fredoka', sans-serif;"></p>
-        <button class="teal-btn" style="width: 100%;" onclick="closeWinnerModal()">PLAY AGAIN</button>
-      </div>
-    </div>
-
   </div>
 
   <script src="script.js"></script>
