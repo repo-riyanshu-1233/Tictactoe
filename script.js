@@ -1,3 +1,9 @@
+// ==========================================
+// GAME CONFIGURATION & MAINTENANCE SETTINGS
+// ==========================================
+// Set to 'true' to activate maintenance mode globally, or 'false' for normal play.
+const IS_MAINTENANCE_MODE = false;
+
 let currentMode = 'local';
 let aiDifficulty = 'easy';
 let boardState = ["", "", "", "", "", "", "", "", ""];
@@ -20,7 +26,24 @@ const winConditions = [
   [0,4,8], [2,4,6]
 ];
 
+// Automatically check maintenance status when script loads
+window.addEventListener('DOMContentLoaded', () => {
+  if (IS_MAINTENANCE_MODE) {
+    openModal('maintenanceModal');
+  }
+});
+
+function checkMaintenance() {
+  if (IS_MAINTENANCE_MODE) {
+    openModal('maintenanceModal');
+    return true;
+  }
+  return false;
+}
+
 function showScreen(screenId) {
+  if (checkMaintenance()) return;
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const activeScreen = document.getElementById(screenId);
   activeScreen.classList.add('active');
@@ -65,8 +88,15 @@ function goBack() {
   showScreen('menuScreen');
 }
 
-function openAIScreen() { showScreen('aiScreen'); }
-function openSandboxScreen() { showScreen('sandboxScreen'); }
+function openAIScreen() { 
+  if (checkMaintenance()) return;
+  showScreen('aiScreen'); 
+}
+
+function openSandboxScreen() { 
+  if (checkMaintenance()) return;
+  showScreen('sandboxScreen'); 
+}
 
 function openModal(id) {
   const modal = document.getElementById(id);
@@ -75,6 +105,7 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+  if (id === 'maintenanceModal' && IS_MAINTENANCE_MODE) return; // Prevent closing maintenance window if active
   const modal = document.getElementById(id);
   modal.classList.remove('active');
   setTimeout(() => modal.style.display = 'none', 250);
@@ -113,6 +144,7 @@ function getUserName() {
 }
 
 function startPassAndPlay() {
+  if (checkMaintenance()) return;
   currentMode = 'local';
   localSymbol = "O";
   isExplicitlyLeaving = false;
@@ -123,6 +155,7 @@ function startPassAndPlay() {
 }
 
 function startAIMode(diff) {
+  if (checkMaintenance()) return;
   currentMode = 'ai';
   aiDifficulty = diff;
   localSymbol = "O";
@@ -136,6 +169,7 @@ function startAIMode(diff) {
 const cells = document.querySelectorAll('.cell');
 cells.forEach(cell => {
   cell.addEventListener('click', () => {
+    if (checkMaintenance()) return;
     const index = cell.getAttribute('data-index');
     if (boardState[index] !== "" || !isGameActive) return;
 
@@ -300,6 +334,15 @@ function closeWinnerModal() {
   resetEntireMatch();
 }
 
+function goToMainMenuFromWinnerModal() {
+  closeModal('winnerModal');
+  if (conn) { 
+    conn.close(); 
+    conn = null; 
+  }
+  showScreen('menuScreen');
+}
+
 function checkWin() {
   return winConditions.some(condition => {
     const [a, b, c] = condition;
@@ -388,6 +431,7 @@ function checkWinState(board, sym) {
 }
 
 function startOnlinePVP() {
+  if (checkMaintenance()) return;
   showScreen('pvpScreen');
   const spinner = document.getElementById('pvpStatusSpinner');
   const title = document.getElementById('pvpStatusText');
@@ -446,6 +490,7 @@ function initPeer(customId, cb) {
 }
 
 function createCustomRoom() {
+  if (checkMaintenance()) return;
   currentMode = 'online';
   isExplicitlyLeaving = false;
   
@@ -475,6 +520,7 @@ function createCustomRoom() {
 }
 
 function joinCustomRoom() {
+  if (checkMaintenance()) return;
   const codeInput = document.getElementById('roomCodeInput');
   let rawCode = codeInput ? codeInput.value.trim() : "";
   
@@ -548,7 +594,6 @@ function setupConn(isHost) {
   });
 
   conn.on('close', () => {
-    // Agar user ne khud game nahi chhoda, tabhi doosre player ko winner banayenge
     if (isGameActive && !isExplicitlyLeaving) {
       isGameActive = false;
       const myName = getUserName();
