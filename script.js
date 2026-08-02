@@ -47,6 +47,29 @@ function closeModal(id) {
   setTimeout(() => modal.style.display = 'none', 250);
 }
 
+function showGameAlert(title, message, btnText = "OK") {
+  const modal = document.getElementById('waitingModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalCodeDisplay = document.getElementById('modalCodeDisplay');
+
+  modalTitle.textContent = title;
+  modalTitle.style.color = "#c0392b";
+  modalCodeDisplay.style.fontSize = "1.2rem";
+  modalCodeDisplay.style.color = "#52473b";
+  modalCodeDisplay.textContent = message;
+
+  const btn = modal.querySelector('button');
+  if (btn) {
+    btn.textContent = btnText;
+    btn.onclick = () => {
+      closeModal('waitingModal');
+      showScreen('menuScreen');
+    };
+  }
+
+  openModal('waitingModal');
+}
+
 function redirectToGame(url) {
   window.open(url, '_blank');
 }
@@ -58,6 +81,7 @@ function getUserName() {
 
 function startPassAndPlay() {
   currentMode = 'local';
+  localSymbol = "O";
   document.getElementById('p1Name').textContent = "PLAYER 1";
   document.getElementById('p2Name').textContent = "PLAYER 2";
   showScreen('gameScreen');
@@ -67,6 +91,7 @@ function startPassAndPlay() {
 function startAIMode(diff) {
   currentMode = 'ai';
   aiDifficulty = diff;
+  localSymbol = "O";
   document.getElementById('p1Name').textContent = "YOU";
   document.getElementById('p2Name').textContent = `AI (${diff.toUpperCase()})`;
   showScreen('gameScreen');
@@ -81,8 +106,10 @@ cells.forEach(cell => {
 
     if (currentMode === 'online') {
       if (currentPlayer !== localSymbol) return;
-      makeMove(index, currentPlayer);
-      if (conn && conn.open) conn.send({ type: 'move', index: index, symbol: currentPlayer });
+      makeMove(index, localSymbol);
+      if (conn && conn.open) {
+        conn.send({ type: 'move', index: index, symbol: localSymbol });
+      }
     } else {
       makeMove(index, currentPlayer);
       if (currentMode === 'ai' && isGameActive && currentPlayer === "X") {
@@ -93,7 +120,7 @@ cells.forEach(cell => {
 });
 
 function makeMove(index, symbol) {
-  if (boardState[index] !== "") return;
+  if (boardState[index] !== "" || !isGameActive) return;
 
   boardState[index] = symbol;
   const cell = cells[index];
@@ -108,7 +135,9 @@ function makeMove(index, symbol) {
     updateScoreboard();
 
     if (scoreP1 === 2 || scoreP2 === 2) {
-      const matchWinner = scoreP1 === 2 ? document.getElementById('p1Name').textContent : document.getElementById('p2Name').textContent;
+      const matchWinner = scoreP1 === 2 
+        ? document.getElementById('p1Name').getAttribute('data-realname') || document.getElementById('p1Name').textContent
+        : document.getElementById('p2Name').getAttribute('data-realname') || document.getElementById('p2Name').textContent;
       setTimeout(() => showMatchWinner(matchWinner), 400);
     } else {
       currentRound++;
@@ -130,12 +159,29 @@ function makeMove(index, symbol) {
 function updateTurnUI() {
   const p1Box = document.getElementById('p1Box');
   const p2Box = document.getElementById('p2Box');
+  
   if (currentPlayer === "O") {
     p1Box.classList.add('active');
     p2Box.classList.remove('active');
   } else {
     p2Box.classList.add('active');
     p1Box.classList.remove('active');
+  }
+
+  const roundBanner = document.getElementById('roundBanner');
+  if (currentMode === 'online') {
+    if (currentPlayer === localSymbol) {
+      roundBanner.textContent = `YOUR TURN (${localSymbol})`;
+      roundBanner.style.color = "#2b8067";
+    } else {
+      roundBanner.textContent = `OPPONENT'S TURN (${localSymbol === 'O' ? 'X' : 'O'})`;
+      roundBanner.style.color = "#c0392b";
+    }
+  } else {
+    const p1NameText = document.getElementById('p1Name').textContent;
+    const p2NameText = document.getElementById('p2Name').textContent;
+    roundBanner.textContent = currentPlayer === "O" ? `${p1NameText}'S TURN (O)` : `${p2NameText}'S TURN (X)`;
+    roundBanner.style.color = "#c0392b";
   }
 }
 
@@ -152,8 +198,10 @@ function resetRound(bannerMsg) {
     cell.textContent = "";
     cell.classList.remove('cell-o', 'cell-x');
   });
-  document.getElementById('roundBanner').textContent = bannerMsg || `BEST OF 3 - ROUND ${currentRound}`;
   updateTurnUI();
+  if (bannerMsg) {
+    document.getElementById('roundBanner').textContent = bannerMsg;
+  }
 }
 
 function resetEntireMatch() {
@@ -161,7 +209,7 @@ function resetEntireMatch() {
   scoreP2 = 0;
   currentRound = 1;
   updateScoreboard();
-  resetRound(`BEST OF 3 - ROUND 1`);
+  resetRound();
 }
 
 function showMatchWinner(winnerName) {
@@ -314,17 +362,31 @@ function initPeer(customId, cb) {
   peer.on('error', err => {
     closeModal('waitingModal');
     if (err.type === 'peer-unavailable') {
-      alert("Room nahi mila! Kripya Room Code sahi se check karein.");
+      showGameAlert("CODE GALAT HAI", "Kripya Room Code sahi se check karke enter karein.");
     } else {
-      alert("Connection Error: Kripya dobara try karein!");
+      showGameAlert("CONNECTION LOST", "Server ya network connection Lost ho gaya hai.");
     }
   });
 }
 
 function createCustomRoom() {
   currentMode = 'online';
-  document.getElementById('modalTitle').textContent = "ROOM CREATED!";
-  document.getElementById('modalCodeDisplay').textContent = "LOADING...";
+  
+  const modalTitle = document.getElementById('modalTitle');
+  modalTitle.textContent = "ROOM CREATED!";
+  modalTitle.style.color = "#2b8067";
+  
+  const modalCodeDisplay = document.getElementById('modalCodeDisplay');
+  modalCodeDisplay.style.fontSize = "2.5rem";
+  modalCodeDisplay.style.color = "#c0392b";
+  modalCodeDisplay.textContent = "LOADING...";
+  
+  const btn = document.getElementById('waitingModal').querySelector('button');
+  if (btn) {
+    btn.textContent = "CANCEL";
+    btn.onclick = () => closeModal('waitingModal');
+  }
+
   openModal('waitingModal');
 
   const customId = generateCustomCode();
@@ -338,20 +400,31 @@ function createCustomRoom() {
 function joinCustomRoom() {
   const codeInput = document.getElementById('roomCodeInput');
   let rawCode = codeInput ? codeInput.value.trim() : "";
-  if (!rawCode) return alert("Kripya Room Code enter karein!");
+  
+  if (!rawCode) {
+    return showGameAlert("CODE MISSING", "Kripya Room Code enter karein!");
+  }
 
-  // FIX: pehle ye line ".toLowerCase()" kar deti thi, lekin room ID
-  // generateCustomCode() mein UPPERCASE banti hai. PeerJS IDs case-sensitive
-  // hote hain, isliye "ttt-abcde" aur "ttt-ABCDE" alag peer maane jaate the
-  // aur join hamesha "peer-unavailable" (code galat) error deta tha.
-  // Ab prefix hata kar baaki part ko UPPERCASE mein normalize kar rahe hain,
-  // taaki host ke asli code se hamesha match ho, chahe user kaise bhi type kare.
   rawCode = rawCode.replace(/^ttt-/i, '').toUpperCase();
   rawCode = 'ttt-' + rawCode;
 
   currentMode = 'online';
-  document.getElementById('modalTitle').textContent = "JOINING ROOM...";
-  document.getElementById('modalCodeDisplay').textContent = rawCode.replace('ttt-', '').toUpperCase();
+
+  const modalTitle = document.getElementById('modalTitle');
+  modalTitle.textContent = "JOINING ROOM...";
+  modalTitle.style.color = "#2b8067";
+
+  const modalCodeDisplay = document.getElementById('modalCodeDisplay');
+  modalCodeDisplay.style.fontSize = "2.5rem";
+  modalCodeDisplay.style.color = "#c0392b";
+  modalCodeDisplay.textContent = rawCode.replace('ttt-', '').toUpperCase();
+
+  const btn = document.getElementById('waitingModal').querySelector('button');
+  if (btn) {
+    btn.textContent = "CANCEL";
+    btn.onclick = () => closeModal('waitingModal');
+  }
+
   openModal('waitingModal');
 
   initPeer(null, () => {
@@ -364,27 +437,50 @@ function setupConn(isHost) {
   conn.on('open', () => {
     closeModal('waitingModal');
     showScreen('gameScreen');
-    localSymbol = isHost ? "O" : "X";
-    conn.send({ type: 'name', name: getUserName() });
+
+    if (isHost) {
+      localSymbol = Math.random() < 0.5 ? "O" : "X";
+      const joinerSymbol = localSymbol === "O" ? "X" : "O";
+
+      conn.send({ 
+        type: 'init', 
+        name: getUserName(), 
+        hostSymbol: localSymbol, 
+        joinerSymbol: joinerSymbol 
+      });
+
+      setupPlayerUI(getUserName(), localSymbol, "PLAYER 2", joinerSymbol);
+      resetEntireMatch();
+    } else {
+      conn.send({ type: 'joiner_name', name: getUserName() });
+    }
   });
 
   conn.on('data', data => {
-    if (data.type === 'name') {
-      if (isHost) {
-        document.getElementById('p1Name').textContent = getUserName();
-        document.getElementById('p2Name').textContent = data.name;
-      } else {
-        document.getElementById('p1Name').textContent = data.name;
-        document.getElementById('p2Name').textContent = getUserName();
-      }
+    if (data.type === 'init') {
+      localSymbol = data.joinerSymbol;
+      setupPlayerUI(data.name, data.hostSymbol, getUserName(), data.joinerSymbol);
       resetEntireMatch();
+    } else if (data.type === 'joiner_name') {
+      const joinerSymbol = localSymbol === "O" ? "X" : "O";
+      setupPlayerUI(getUserName(), localSymbol, data.name, joinerSymbol);
     } else if (data.type === 'move') {
       makeMove(data.index, data.symbol);
     }
   });
 
   conn.on('close', () => {
-    alert("Opponent disconnected!");
-    showScreen('menuScreen');
+    showGameAlert("USER LEFT", "Dusra player game se left ho gaya hai.");
   });
+}
+
+function setupPlayerUI(p1Name, p1Sym, p2Name, p2Sym) {
+  const p1El = document.getElementById('p1Name');
+  const p2El = document.getElementById('p2Name');
+
+  p1El.setAttribute('data-realname', p1Name);
+  p2El.setAttribute('data-realname', p2Name);
+
+  p1El.textContent = `${p1Name} [${p1Sym}]`;
+  p2El.textContent = `${p2Name} [${p2Sym}]`;
 }
