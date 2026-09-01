@@ -1,4 +1,4 @@
-const IS_MAINTENANCE_MODE = false;
+const IS_MAINTENANCE_MODE = true;
 
 let currentMode = 'local';
 let aiDifficulty = 'easy';
