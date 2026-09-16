@@ -147,6 +147,6 @@ The application can be deployed on static hosting platforms such as:
 
 Tic-Tac-Toe is a browser-based game built to combine classic local gameplay with AI and real-time peer-to-peer multiplayer.
 
-Made with ❤️ and JavaScript.
+Made with ❤️ by riyanshu sinh 
 
 ⭐ If you like the project, consider giving the repository a star!
