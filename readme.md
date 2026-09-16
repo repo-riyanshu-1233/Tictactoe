@@ -119,6 +119,7 @@ The application can be deployed on static hosting platforms such as:
 - Vercel
 - Netlify
 - Other static hosting services
+- onrender
 
 ⚠️ Notes
 
