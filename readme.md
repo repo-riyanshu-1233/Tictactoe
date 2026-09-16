@@ -2,6 +2,8 @@
 
 A modern Tic-Tac-Toe game with Single Player AI, local Pass & Play, and real-time online multiplayer — all in a simple web-based interface.
 
+live demo web - https://tictactoe-xx1u.onrender.com
+
 ✨ Features
 
 - 🤖 AI Mode — Play Tic-Tac-Toe against an AI opponent.
